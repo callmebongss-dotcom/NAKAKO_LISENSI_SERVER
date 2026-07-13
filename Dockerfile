@@ -12,4 +12,4 @@ RUN composer install --no-dev --optimize-autoloader
 
 EXPOSE 80
 
-CMD ["frankenphp", "run", "--config", "/app/Caddyfile"]
+ENTRYPOINT ["/usr/local/bin/frankenphp", "run", "--config", "/app/Caddyfile"]
