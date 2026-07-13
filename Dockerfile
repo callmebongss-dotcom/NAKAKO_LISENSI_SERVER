@@ -10,6 +10,8 @@ WORKDIR /app
 
 RUN composer install --no-dev --optimize-autoloader
 
+RUN chmod +x /app/start.sh
+
 EXPOSE 8080
 
-CMD sh -c "php -S 0.0.0.0:${PORT:-8080} -t public public/index.php"
+ENTRYPOINT ["/app/start.sh"]
