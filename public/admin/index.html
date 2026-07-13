@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAKAKO LICENSE SERVER - Admin</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <div id="loginPage" class="page">
+            <div class="login-card">
+                <div class="logo">NAKAKO</div>
+                <div class="logo-sub">LICENSE SERVER</div>
+                <div class="form-group">
+                    <input type="text" id="username" placeholder="Username" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <input type="password" id="password" placeholder="Password">
+                </div>
+                <button onclick="login()" class="btn btn-primary btn-full">MASUK</button>
+                <div id="loginError" class="error-msg"></div>
+            </div>
+        </div>
+
+        <div id="dashboardPage" class="page" style="display:none">
+            <header>
+                <div class="header-left">
+                    <div class="logo-sm">NAKAKO</div>
+                    <span class="logo-sub-sm">LICENSE SERVER</span>
+                </div>
+                <div class="header-nav">
+                    <button onclick="showPage('licenses')" id="tabLicenses" class="nav-btn active">Lisensi</button>
+                    <button onclick="showPage('plans')" id="tabPlans" class="nav-btn">Paket</button>
+                    <button onclick="showPage('packages')" id="tabPackages" class="nav-btn">Paket Lisensi</button>
+                    <button onclick="showPage('control')" id="tabControl" class="nav-btn">Kontrol</button>
+                    <button onclick="showPage('management')" id="tabManagement" class="nav-btn">Manajemen</button>
+                    <button onclick="showPage('productkeys')" id="tabProductKeys" class="nav-btn">Product Key</button>
+                    <button onclick="showPage('certificates')" id="tabCertificates" class="nav-btn">Sertifikat</button>
+                </div>
+                <div class="header-right">
+                    <span id="adminName">Admin</span>
+                    <button onclick="logout()" class="btn btn-outline btn-sm">Logout</button>
+                </div>
+            </header>
+
+            <div id="pageLicenses" class="container">
+                <div class="stats-row" id="statsRow">
+                    <div class="stat-card total" onclick="filterStatus('')">
+                        <div class="stat-value" id="statTotal">0</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                    <div class="stat-card pending" onclick="filterStatus('PENDING')">
+                        <div class="stat-value" id="statPending">0</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    <div class="stat-card active" onclick="filterStatus('ACTIVE')">
+                        <div class="stat-value" id="statActive">0</div>
+                        <div class="stat-label">Active</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color:#FF9800" onclick="filterStatus('TRIAL_EXPIRED')">
+                        <div class="stat-value" id="statTrialExpired">0</div>
+                        <div class="stat-label">Trial Expired</div>
+                    </div>
+                    <div class="stat-card blocked" onclick="filterStatus('BLOCKED')">
+                        <div class="stat-value" id="statBlocked">0</div>
+                        <div class="stat-label">Blocked</div>
+                    </div>
+                </div>
+
+                <div class="toolbar">
+                    <input type="text" id="searchInput" placeholder="Cari nama, HP, device, key, kota..." oninput="filterLicenses()">
+                    <select id="statusFilter" onchange="filterLicenses()">
+                        <option value="">Semua</option>
+                        <option value="TRIAL">Trial</option>
+                        <option value="LIFETIME">Lifetime</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="BLOCKED">Blocked</option>
+                        <option value="TRIAL_EXPIRED">Expired Trial</option>
+                        <option value="REJECTED">Rejected</option>
+                        <option value="SUSPENDED">Suspended</option>
+                    </select>
+                    <span style="flex:1"></span>
+                    <button onclick="exportPDF()" class="btn btn-outline btn-sm">PDF</button>
+                    <button onclick="exportExcel()" class="btn btn-outline btn-sm">Excel</button>
+                    <button onclick="exportCSV()" class="btn btn-outline btn-sm">CSV</button>
+                </div>
+
+                <div class="table-container" style="overflow-x:auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nama Rental</th>
+                                <th>Pemilik</th>
+                                <th>No. HP</th>
+                                <th>Kota</th>
+                                <th>Device</th>
+                                <th>License Key</th>
+                                <th>Status</th>
+                                <th>Jenis</th>
+                                <th>Tgl Aktivasi</th>
+                                <th>Harga</th>
+                                <th>Versi</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="licenseTableBody">
+                            <tr><td colspan="13" class="text-center">Memuat data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="pagePlans" style="display:none">
+                    <div class="toolbar">
+                        <h2 style="flex:1;font-size:18px;color:#fff">Paket Lisensi</h2>
+                        <button onclick="openAddPlan()" class="btn btn-primary btn-sm">+ Tambah Paket</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nama</th>
+                                    <th>Durasi</th>
+                                    <th>Offline</th>
+                                    <th>Max TV</th>
+                                    <th>Transfer</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="plansTableBody">
+                                <tr><td colspan="8" class="text-center">Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="pagePackages" style="display:none">
+                    <div class="toolbar">
+                        <h2 style="flex:1;font-size:18px;color:#fff">Paket Lisensi</h2>
+                        <button onclick="openAddPackage()" class="btn btn-primary btn-sm">+ Tambah Paket</button>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nama</th>
+                                    <th>Harga</th>
+                                    <th>Durasi</th>
+                                    <th>Max Device</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="packagesTableBody">
+                                <tr><td colspan="7" class="text-center">Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="pageControl" style="display:none">
+                    <div class="toolbar">
+                        <h2 style="flex:1;font-size:18px;color:#fff">License Control Center</h2>
+                        <span id="onlineCount" style="color:#4CAF50;font-size:13px"></span>
+                        <span id="offlineCount" style="color:#6C6C80;font-size:13px;margin-left:12px"></span>
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Rental</th>
+                                    <th>Pemilik</th>
+                                    <th>Device ID</th>
+                                    <th>Status</th>
+                                    <th>Platform</th>
+                                    <th>Last Online</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="controlTableBody">
+                                <tr><td colspan="8" class="text-center">Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="pageManagement" style="display:none">
+                    <div class="stats-row">
+                        <div class="stat-card total">
+                            <div class="stat-value" id="mgmtStatTotal">0</div>
+                            <div class="stat-label">Total</div>
+                        </div>
+                        <div class="stat-card pending">
+                            <div class="stat-value" id="mgmtStatPending">0</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                        <div class="stat-card active">
+                            <div class="stat-value" id="mgmtStatActive">0</div>
+                            <div class="stat-label">Active</div>
+                        </div>
+                        <div class="stat-card" style="border-left-color:#FF9800">
+                            <div class="stat-value" id="mgmtStatTrialExpired">0</div>
+                            <div class="stat-label">Trial Expired</div>
+                        </div>
+                        <div class="stat-card blocked">
+                            <div class="stat-value" id="mgmtStatBlocked">0</div>
+                            <div class="stat-label">Blocked</div>
+                        </div>
+                    </div>
+                    <div class="toolbar">
+                        <input type="text" id="managementSearch" placeholder="Cari nama, HP, device, key, kota..." oninput="renderManagementTable()">
+                        <select id="managementTypeFilter" onchange="renderManagementTable()">
+                            <option value="">Semua</option>
+                            <option value="TRIAL">Trial</option>
+                            <option value="LIFETIME">Lifetime</option>
+                            <option value="BLOCKED">Blocked</option>
+                            <option value="TRIAL_EXPIRED">Expired Trial</option>
+                        </select>
+                        <span style="flex:1"></span>
+                        <button onclick="checkExpiredTrials()" class="btn btn-outline btn-sm">Periksa Trial</button>
+                    </div>
+                    <div class="table-container" style="overflow-x:auto">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nama Rental</th>
+                                    <th>Pemilik</th>
+                                    <th>No. HP</th>
+                                    <th>Kota</th>
+                                    <th>Device</th>
+                                    <th>License Key</th>
+                                    <th>Status</th>
+                                    <th>Jenis</th>
+                                    <th>Tgl Aktivasi</th>
+                                    <th>Harga</th>
+                                    <th>Versi</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="managementTableBody">
+                                <tr><td colspan="13" class="text-center">Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="pageCertificates" style="display:none">
+                    <div class="stats-row">
+                        <div class="stat-card total">
+                            <div class="stat-value" id="certStatTotal">0</div>
+                            <div class="stat-label">Total Sertifikat</div>
+                        </div>
+                    </div>
+                    <div class="toolbar">
+                        <input type="text" id="certSearchInput" placeholder="Cari sertifikat..." oninput="renderCertificates()">
+                        <span style="flex:1"></span>
+                    </div>
+                    <div class="table-container" style="overflow-x:auto">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>No. Sertifikat</th>
+                                    <th>License ID</th>
+                                    <th>Nama Rental</th>
+                                    <th>Jenis</th>
+                                    <th>Digenerate</th>
+                                    <th>Oleh</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="certificateTableBody">
+                                <tr><td colspan="8" class="text-center">Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="pageProductKeys" style="display:none">
+                    <div class="stats-row">
+                        <div class="stat-card total">
+                            <div class="stat-value" id="pkStatTotal">0</div>
+                            <div class="stat-label">Total</div>
+                        </div>
+                        <div class="stat-card active">
+                            <div class="stat-value" id="pkStatUnused">0</div>
+                            <div class="stat-label">UNUSED</div>
+                        </div>
+                        <div class="stat-card" style="border-left-color:#2196F3">
+                            <div class="stat-value" id="pkStatUsed">0</div>
+                            <div class="stat-label">USED</div>
+                        </div>
+                        <div class="stat-card blocked">
+                            <div class="stat-value" id="pkStatBlocked">0</div>
+                            <div class="stat-label">BLOCKED</div>
+                        </div>
+                    </div>
+                    <div class="toolbar">
+                        <input type="text" id="pkSearchInput" placeholder="Cari Product Key..." oninput="renderProductKeys()">
+                        <span style="flex:1"></span>
+                        <button onclick="openGenerateProductKey()" class="btn btn-primary btn-sm">+ Generate</button>
+                        <button onclick="openGenerateMultipleProductKeys()" class="btn btn-primary btn-sm">+ Generate Multiple</button>
+                        <button onclick="exportProductKeysCSV()" class="btn btn-outline btn-sm">CSV</button>
+                    </div>
+                    <div class="table-container" style="overflow-x:auto">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Product Key</th>
+                                    <th>Status</th>
+                                    <th>Tipe</th>
+                                    <th>Generated</th>
+                                    <th>Digunakan</th>
+                                    <th>License ID</th>
+                                    <th>Oleh</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productKeyTableBody">
+                                <tr><td colspan="9" class="text-center">Memuat data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="approveModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">Konfirmasi Approve</div>
+            <p>Approve lisensi untuk <strong id="approveName"></strong>?</p>
+            <p class="text-muted">License Key akan digenerate otomatis.</p>
+            <div class="modal-actions">
+                <button onclick="closeModal('approveModal')" class="btn btn-outline">Batal</button>
+                <button onclick="confirmApprove()" class="btn btn-success">Approve</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="approveWithTypeModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">Approve Lisensi</div>
+            <div id="approveWithTypeInfo" style="margin-bottom:16px">
+                <p style="font-size:14px">Lisensi untuk <strong id="approveTypeName"></strong></p>
+                <p class="text-muted" style="font-size:13px">Pemilik: <span id="approveTypeOwner"></span> | No. HP: <span id="approveTypePhone"></span></p>
+            </div>
+            <div class="form-group">
+                <label style="color:#B0B0C3;font-size:13px;display:block;margin-bottom:8px">Jenis Lisensi</label>
+                <div style="display:flex;gap:20px">
+                    <label style="color:#fff;font-size:14px;cursor:pointer"><input type="radio" name="licenseType" value="TRIAL" checked onchange="toggleApproveTypeFields()"> Trial</label>
+                    <label style="color:#fff;font-size:14px;cursor:pointer"><input type="radio" name="licenseType" value="LIFETIME" onchange="toggleApproveTypeFields()"> Lifetime</label>
+                </div>
+            </div>
+            <div id="approveTrialFields">
+                <div class="form-group">
+                    <label style="color:#B0B0C3;font-size:13px;display:block;margin-bottom:4px">Durasi Trial</label>
+                    <select id="approveTrialDays" style="width:100%;padding:8px 12px;background:#2A2A3E;border:1px solid #3A3A4E;border-radius:6px;color:#fff;font-size:14px">
+                        <option value="3">3 Hari</option>
+                        <option value="7">7 Hari</option>
+                        <option value="14">14 Hari</option>
+                        <option value="30" selected>30 Hari</option>
+                    </select>
+                </div>
+            </div>
+            <div id="approveLifetimeFields" style="display:none">
+                <div class="form-group">
+                    <label style="color:#B0B0C3;font-size:13px;display:block;margin-bottom:4px">Harga Pembelian (Rp)</label>
+                    <input type="number" id="approvePurchasePrice" placeholder="199000" min="0" style="width:100%;padding:8px 12px;background:#2A2A3E;border:1px solid #3A3A4E;border-radius:6px;color:#fff;font-size:14px">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeModal('approveWithTypeModal')" class="btn btn-outline">Batal</button>
+                <button onclick="confirmApproveWithType()" class="btn btn-success">Approve</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="rejectModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">Konfirmasi Reject</div>
+            <p>Tolak lisensi untuk <strong id="rejectName"></strong>?</p>
+            <div class="form-group">
+                <textarea id="rejectRemarks" placeholder="Alasan penolakan" rows="3"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeModal('rejectModal')" class="btn btn-outline">Batal</button>
+                <button onclick="confirmReject()" class="btn btn-danger">Tolak</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="detailModal" class="modal" style="display:none">
+        <div class="modal-content" style="max-width:550px">
+            <div class="modal-header">Detail Lisensi</div>
+            <div id="detailContent"></div>
+            <div class="modal-actions">
+                <button onclick="closeModal('detailModal')" class="btn btn-outline">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="transferModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">Transfer Lisensi</div>
+            <p>Transfer lisensi untuk <strong id="transferName"></strong>?</p>
+            <p class="text-muted">Fingerprint dan data perangkat akan dihapus. Customer dapat aktivasi ulang di perangkat baru.</p>
+            <div class="form-group">
+                <input type="text" id="transferReason" placeholder="Alasan transfer (contoh: ganti HP)" autocomplete="off">
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeModal('transferModal')" class="btn btn-outline">Batal</button>
+                <button onclick="confirmTransfer()" class="btn btn-success">Transfer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="historyModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">Riwayat Transfer</div>
+            <div id="historyContent"></div>
+            <div class="modal-actions">
+                <button onclick="closeModal('historyModal')" class="btn btn-outline">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editPriceModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">Edit Harga</div>
+            <p>Ubah harga pembelian untuk <strong id="editPriceName"></strong></p>
+            <p class="text-muted" id="editPriceCurrent" style="font-size:13px"></p>
+            <div class="form-group">
+                <label style="color:#B0B0C3;font-size:13px;display:block;margin-bottom:4px">Harga Baru (Rp)</label>
+                <input type="number" id="editPriceValue" placeholder="199000" min="0" style="width:100%;padding:8px 12px;background:#2A2A3E;border:1px solid #3A3A4E;border-radius:6px;color:#fff;font-size:14px">
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeModal('editPriceModal')" class="btn btn-outline">Batal</button>
+                <button onclick="confirmEditPrice()" class="btn btn-success">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editNotesModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">Edit Catatan</div>
+            <p>Edit catatan untuk <strong id="editNotesName"></strong></p>
+            <div class="form-group">
+                <textarea id="editNotesValue" placeholder="Catatan..." rows="4" style="width:100%;padding:8px 12px;background:#2A2A3E;border:1px solid #3A3A4E;border-radius:6px;color:#fff;font-size:14px;resize:vertical"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeModal('editNotesModal')" class="btn btn-outline">Batal</button>
+                <button onclick="confirmEditNotes()" class="btn btn-success">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="upgradeVersionModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">Upgrade Major Version</div>
+            <p>Upgrade versi utama untuk <strong id="upgradeVersionName"></strong></p>
+            <p class="text-muted" id="upgradeVersionCurrent" style="font-size:13px"></p>
+            <div class="form-group">
+                <label style="color:#B0B0C3;font-size:13px;display:block;margin-bottom:4px">Major Version Baru</label>
+                <select id="upgradeVersionValue" style="width:100%;padding:8px 12px;background:#2A2A3E;border:1px solid #3A3A4E;border-radius:6px;color:#fff;font-size:14px">
+                    <option value="1">v1</option>
+                    <option value="2">v2</option>
+                    <option value="3">v3</option>
+                    <option value="4">v4</option>
+                    <option value="5">v5</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeModal('upgradeVersionModal')" class="btn btn-outline">Batal</button>
+                <button onclick="confirmUpgradeVersion()" class="btn btn-success">Upgrade</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="updateMaxTransferModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">Update Max Transfer</div>
+            <p>Update batas transfer untuk <strong id="updateMaxTransferName"></strong></p>
+            <p class="text-muted" id="updateMaxTransferCurrent" style="font-size:13px"></p>
+            <div class="form-group">
+                <label style="color:#B0B0C3;font-size:13px;display:block;margin-bottom:4px">Max Transfer Baru</label>
+                <select id="updateMaxTransferValue" style="width:100%;padding:8px 12px;background:#2A2A3E;border:1px solid #3A3A4E;border-radius:6px;color:#fff;font-size:14px">
+                    <option value="1">1x</option>
+                    <option value="2">2x</option>
+                    <option value="3" selected>3x</option>
+                    <option value="5">5x</option>
+                    <option value="10">10x</option>
+                    <option value="999">Unlimited</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeModal('updateMaxTransferModal')" class="btn btn-outline">Batal</button>
+                <button onclick="confirmUpdateMaxTransfer()" class="btn btn-success">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="licenseHistoryModal" class="modal" style="display:none">
+        <div class="modal-content" style="max-width:650px">
+            <div class="modal-header">Riwayat Lisensi</div>
+            <div id="licenseHistoryContent"></div>
+            <div class="modal-actions">
+                <button onclick="closeModal('licenseHistoryModal')" class="btn btn-outline">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="planModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header" id="planModalTitle">Tambah Paket</div>
+            <div class="form-group">
+                <input type="text" id="planName" placeholder="Nama Paket">
+            </div>
+            <div class="form-group">
+                <input type="text" id="planDesc" placeholder="Deskripsi">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="form-group">
+                    <input type="number" id="planOfflineDays" placeholder="Offline (hari)" min="1">
+                </div>
+                <div class="form-group">
+                    <input type="number" id="planDurationDays" placeholder="Durasi (hari)" min="1">
+                </div>
+                <div class="form-group">
+                    <input type="number" id="planMaxTv" placeholder="Max TV" min="1">
+                </div>
+                <div class="form-group">
+                    <input type="number" id="planMaxTransfer" placeholder="Max Transfer" min="0">
+                </div>
+            </div>
+            <div class="form-group" style="display:flex;gap:16px;align-items:center">
+                <label style="color:#B0B0C3;font-size:13px">
+                    <input type="checkbox" id="planAllowTransfer"> Izinkan Transfer
+                </label>
+                <label style="color:#B0B0C3;font-size:13px">
+                    <input type="checkbox" id="planActive"> Aktif
+                </label>
+            </div>
+            <input type="hidden" id="planEditId" value="">
+            <div class="modal-actions">
+                <button onclick="closeModal('planModal')" class="btn btn-outline">Batal</button>
+                <button onclick="savePlan()" class="btn btn-success" id="planSaveBtn">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="packageModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header" id="packageModalTitle">Tambah Paket Lisensi</div>
+            <div class="form-group">
+                <input type="text" id="packageName" placeholder="Nama Paket">
+            </div>
+            <div class="form-group">
+                <textarea id="packageDesc" placeholder="Deskripsi paket..." rows="3"></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="form-group">
+                    <input type="number" id="packagePrice" placeholder="Harga (Rp)" min="0">
+                </div>
+                <div class="form-group">
+                    <input type="number" id="packageDuration" placeholder="Durasi (hari)" min="1">
+                </div>
+                <div class="form-group">
+                    <input type="number" id="packageMaxDevices" placeholder="Max Device" min="1">
+                </div>
+                <div class="form-group">
+                    <input type="text" id="packageFeatures" placeholder='Fitur JSON (opsional)'>
+                </div>
+            </div>
+            <div class="form-group">
+                <select id="packageStatus">
+                    <option value="ACTIVE">Aktif</option>
+                    <option value="INACTIVE">Nonaktif</option>
+                </select>
+            </div>
+            <input type="hidden" id="packageEditId" value="">
+            <div class="modal-actions">
+                <button onclick="closeModal('packageModal')" class="btn btn-outline">Batal</button>
+                <button onclick="savePackage()" class="btn btn-success" id="packageSaveBtn">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="remoteModal" class="modal" style="display:none">
+        <div class="modal-content" style="max-width:500px">
+            <div class="modal-header">Remote Action</div>
+            <div id="remoteInfo" style="margin-bottom:16px;font-size:13px;color:#B0B0C3"></div>
+            <div id="remoteActions" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+            <div id="remoteMessage" style="display:none;margin-top:12px">
+                <div class="form-group">
+                    <textarea id="remoteMessageText" placeholder="Tulis pesan..." rows="3"></textarea>
+                </div>
+                <button onclick="confirmSendMessage()" class="btn btn-primary btn-sm">Kirim</button>
+            </div>
+            <div id="remoteExtend" style="display:none;margin-top:12px">
+                <div class="form-group">
+                    <select id="remoteExtendDays">
+                        <option value="7">7 Hari</option>
+                        <option value="30" selected>30 Hari</option>
+                        <option value="90">90 Hari</option>
+                        <option value="365">365 Hari</option>
+                        <option value="99999">Seumur Hidup</option>
+                    </select>
+                </div>
+                <button onclick="confirmExtend()" class="btn btn-primary btn-sm">Perpanjang</button>
+            </div>
+            <div id="remotePlan" style="display:none;margin-top:12px">
+                <div class="form-group">
+                    <select id="remotePlanSelect"></select>
+                </div>
+                <button onclick="confirmChangePlan()" class="btn btn-primary btn-sm">Ganti</button>
+            </div>
+            <div class="modal-actions" style="margin-top:12px">
+                <button onclick="closeModal('remoteModal')" class="btn btn-outline">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="commandHistoryModal" class="modal" style="display:none">
+        <div class="modal-content" style="max-width:600px">
+            <div class="modal-header">Riwayat Perintah</div>
+            <div id="commandHistoryContent"></div>
+            <div class="modal-actions">
+                <button onclick="closeModal('commandHistoryModal')" class="btn btn-outline">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="certificateModal" class="modal" style="display:none">
+        <div class="modal-content" style="max-width:500px">
+            <div class="modal-header">Sertifikat Lisensi</div>
+            <div id="certificateInfo" style="margin-bottom:16px"></div>
+            <div id="certificateActions" style="display:flex;gap:8px;flex-wrap:wrap">
+                <button onclick="downloadCertificate()" class="btn btn-success" id="certDownloadBtn">Download PDF</button>
+                <button onclick="printCertificate()" class="btn btn-primary" id="certPrintBtn">Print</button>
+                <button onclick="closeModal('certificateModal')" class="btn btn-outline">Tutup</button>
+            </div>
+            <div id="certificateError" class="error-msg" style="display:none;margin-top:12px"></div>
+        </div>
+    </div>
+
+    <div id="generatePKModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">Generate Product Key</div>
+            <p>Buat Product Key baru</p>
+            <div class="form-group">
+                <label style="color:#B0B0C3;font-size:13px;display:block;margin-bottom:4px">Tipe Lisensi</label>
+                <select id="generatePKType" style="width:100%;padding:8px 12px;background:#2A2A3E;border:1px solid #3A3A4E;border-radius:6px;color:#fff;font-size:14px">
+                    <option value="LIFETIME">LIFETIME</option>
+                    <option value="TRIAL">TRIAL</option>
+                </select>
+            </div>
+            <div id="generatePKResult" style="display:none;margin-top:12px">
+                <label style="color:#B0B0C3;font-size:13px;display:block;margin-bottom:4px">Product Key Baru</label>
+                <div style="background:#1A1A2E;padding:12px;border-radius:6px;border:1px solid #3A3A4E;text-align:center">
+                    <span id="generatePKResultText" style="font-family:monospace;font-size:18px;color:#4CAF50;font-weight:bold;letter-spacing:2px;word-break:break-all"></span>
+                </div>
+                <div style="margin-top:8px">
+                    <button onclick="copyPKResult()" class="btn btn-outline btn-sm">Copy</button>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeModal('generatePKModal')" class="btn btn-outline">Tutup</button>
+                <button onclick="confirmGenerateProductKey()" class="btn btn-success">Generate</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="generateMultiplePKModal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">Generate Multiple Product Keys</div>
+            <p>Banyak Product Key sekaligus</p>
+            <div class="form-group">
+                <label style="color:#B0B0C3;font-size:13px;display:block;margin-bottom:4px">Jumlah</label>
+                <select id="generateMultiplePKCount" style="width:100%;padding:8px 12px;background:#2A2A3E;border:1px solid #3A3A4E;border-radius:6px;color:#fff;font-size:14px">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="500">500</option>
+                    <option value="1000">1000</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label style="color:#B0B0C3;font-size:13px;display:block;margin-bottom:4px">Tipe Lisensi</label>
+                <select id="generateMultiplePKType" style="width:100%;padding:8px 12px;background:#2A2A3E;border:1px solid #3A3A4E;border-radius:6px;color:#fff;font-size:14px">
+                    <option value="LIFETIME">LIFETIME</option>
+                    <option value="TRIAL">TRIAL</option>
+                </select>
+            </div>
+            <div id="generateMultiplePKResult" style="display:none;margin-top:12px">
+                <label style="color:#B0B0C3;font-size:13px;display:block;margin-bottom:4px">Hasil Generate</label>
+                <div style="background:#1A1A2E;padding:12px;border-radius:6px;border:1px solid #3A3A4E;text-align:center">
+                    <span id="generateMultiplePKResultText" style="font-size:16px;color:#4CAF50;font-weight:bold"></span>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button onclick="closeModal('generateMultiplePKModal')" class="btn btn-outline">Tutup</button>
+                <button onclick="confirmGenerateMultipleProductKeys()" class="btn btn-success">Generate</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

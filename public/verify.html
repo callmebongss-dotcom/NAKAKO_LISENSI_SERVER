@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifikasi Sertifikat - NAKAKO GAMES</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .card {
+            background: #1e1e3a;
+            border: 1px solid #3a3a5e;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .logo span { color: #2962ff; }
+        .subtitle {
+            color: #8888aa;
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+        .status-icon {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 36px;
+        }
+        .status-valid { background: rgba(76,175,80,0.15); color: #4CAF50; }
+        .status-invalid { background: rgba(244,67,54,0.15); color: #F44336; }
+        .status-loading { background: rgba(255,193,7,0.15); color: #FFC107; }
+        .status-text {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .status-msg {
+            font-size: 14px;
+            color: #aaaacc;
+            margin-bottom: 28px;
+        }
+        .cert-number {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            color: #2962ff;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+        .info { text-align: left; margin-bottom: 20px; }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #2a2a4e;
+            font-size: 14px;
+        }
+        .info-label { color: #8888aa; }
+        .info-value { color: #fff; font-weight: 500; }
+        .footer {
+            color: #555577;
+            font-size: 12px;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #2a2a4e;
+        }
+        .error { color: #F44336; padding: 20px; }
+        .loading { color: #FFC107; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">NAKAKO <span>GAMES</span></div>
+        <div class="subtitle">Verifikasi Sertifikat Lisensi</div>
+
+        <div id="statusIcon" class="status-icon status-loading">&#8987;</div>
+        <div id="statusText" class="status-text" style="color:#FFC107">Memverifikasi...</div>
+        <div id="statusMsg" class="status-msg">Sedang memeriksa keabsahan sertifikat</div>
+        <div id="certNumber" class="cert-number"></div>
+
+        <div id="infoContainer" class="info" style="display:none"></div>
+
+        <div class="footer">
+            NAKAKO GAMES - License Server v1.0 &bull; Sertifikat ini adalah bukti lisensi resmi
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const certNumber = params.get('cert') || window.location.pathname.split('/').pop();
+
+        if (certNumber && certNumber !== 'verify.html') {
+            fetch('/api/certificate/verify/' + encodeURIComponent(certNumber))
+                .then(r => r.json())
+                .then(res => {
+                    const icon = document.getElementById('statusIcon');
+                    const text = document.getElementById('statusText');
+                    const msg = document.getElementById('statusMsg');
+                    const certEl = document.getElementById('certNumber');
+                    const info = document.getElementById('infoContainer');
+
+                    certEl.textContent = certNumber;
+
+                    if (res.success && res.valid) {
+                        icon.className = 'status-icon status-valid';
+                        icon.innerHTML = '&#10003;';
+                        text.style.color = '#4CAF50';
+                        text.textContent = 'Sertifikat VALID';
+                        msg.textContent = 'Sertifikat ini telah terverifikasi dan ditandatangani secara digital.';
+                        msg.style.color = '#aaaacc';
+
+                        const d = res.data || {};
+                        info.style.display = '';
+                        info.innerHTML = `
+                            <div class="info-row"><span class="info-label">Nama Rental</span><span class="info-value">${escapeHtml(d.business_name || '-')}</span></div>
+                            <div class="info-row"><span class="info-label">Pemilik</span><span class="info-value">${escapeHtml(d.owner_name || '-')}</span></div>
+                            <div class="info-row"><span class="info-label">No. HP</span><span class="info-value">${escapeHtml(d.phone_number || '-')}</span></div>
+                            <div class="info-row"><span class="info-label">License Key</span><span class="info-value" style="font-family:monospace;font-size:12px">${escapeHtml(d.license_key || '-')}</span></div>
+                            <div class="info-row"><span class="info-label">Product Key</span><span class="info-value" style="font-family:monospace;font-size:12px">${escapeHtml(d.product_key || '-')}</span></div>
+                            <div class="info-row"><span class="info-label">Jenis Lisensi</span><span class="info-value">${escapeHtml(d.license_type || '-')}</span></div>
+                            <div class="info-row"><span class="info-label">Tanggal Aktivasi</span><span class="info-value">${d.activation_date ? new Date(d.activation_date + 'Z').toLocaleDateString('id-ID') : '-'}</span></div>
+                        `;
+                    } else {
+                        icon.className = 'status-icon status-invalid';
+                        icon.innerHTML = '&#10007;';
+                        text.style.color = '#F44336';
+                        text.textContent = 'Sertifikat TIDAK VALID';
+                        msg.textContent = res.message || 'Sertifikat tidak ditemukan atau tanda tangan digital tidak cocok.';
+                        msg.style.color = '#F44336';
+                        info.style.display = 'none';
+                    }
+                })
+                .catch(err => {
+                    document.getElementById('statusIcon').className = 'status-icon status-invalid';
+                    document.getElementById('statusIcon').innerHTML = '&#10007;';
+                    document.getElementById('statusText').textContent = 'Gagal Verifikasi';
+                    document.getElementById('statusText').style.color = '#F44336';
+                    document.getElementById('statusMsg').textContent = 'Tidak dapat terhubung ke server verifikasi.';
+                });
+        } else {
+            document.getElementById('statusIcon').className = 'status-icon status-invalid';
+            document.getElementById('statusIcon').innerHTML = '&#10007;';
+            document.getElementById('statusText').textContent = 'Tidak Ada Data';
+            document.getElementById('statusText').style.color = '#F44336';
+            document.getElementById('statusMsg').textContent = 'Nomor sertifikat tidak ditemukan.';
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '-';
+            const d = document.createElement('div');
+            d.textContent = text;
+            return d.innerHTML;
+        }
+    </script>
+</body>
+</html>

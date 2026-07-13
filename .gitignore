@@ -1,0 +1,8 @@
+database/license.db
+progress
+*.log
+/.idea/
+/vendor/
+.DS_Store
+Thumbs.db
+
