@@ -1,17 +1,15 @@
-FROM dunglas/frankenphp:latest
+FROM php:8.2-cli
 
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-RUN install-php-extensions pdo_mysql gd
+RUN docker-php-ext-install pdo_mysql pdo_sqlite
 
 COPY . /app
 
 WORKDIR /app
 
-RUN composer install --no-dev --optimize-autoloader
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-RUN chmod +x /app/start.sh
+RUN composer install --no-dev --optimize-autoloader
 
 EXPOSE 8080
 
-ENTRYPOINT ["/app/start.sh"]
+CMD php -S 0.0.0.0:${PORT:-8080} -t public public/index.php
