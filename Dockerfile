@@ -5,12 +5,11 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN install-php-extensions pdo_mysql gd
 
 COPY . /app
-COPY Caddyfile /Caddyfile
 
 WORKDIR /app
 
 RUN composer install --no-dev --optimize-autoloader
 
-EXPOSE 80
+EXPOSE 8080
 
-CMD ["run"]
+CMD sh -c "php -S 0.0.0.0:${PORT:-8080} -t public public/index.php"
