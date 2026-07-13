@@ -1,6 +1,6 @@
 {
-    frankenphp
-    auto_https off
+	frankenphp
+	auto_https off
 }
 
 {$PORT:80}
@@ -10,23 +10,23 @@ root * /app/public
 log
 
 @api {
-    path /api/*
+	path /api/*
 }
 rewrite @api /index.php
 
 @admin {
-    path /admin/*
+	path /admin/*
 }
 route @admin {
-    try_files {path} {path}/ /admin/index.html
+	try_files {path} {path}/ /admin/index.html
 }
 
 route {
-    try_files {path} {path}/ /index.php?{query}
+	try_files {path} {path}/ /index.php?{query}
 }
 
 php {
-    resolve_root_symlink
+	resolve_root_symlink
 }
 
 file_server
