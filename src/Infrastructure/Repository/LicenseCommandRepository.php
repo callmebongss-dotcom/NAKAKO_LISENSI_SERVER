@@ -19,7 +19,7 @@ class LicenseCommandRepository
     {
         $stmt = $this->db->prepare('
             INSERT INTO license_commands (license_id, command, payload, status, created_by, created_at)
-            VALUES (?, ?, ?, \'PENDING\', ?, NOW())
+            VALUES (?, ?, ?, \'PENDING\', ?, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([
             $data['license_id'],
@@ -44,7 +44,7 @@ class LicenseCommandRepository
     public function markExecuted(int $id, string $result): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE license_commands SET status = \'EXECUTED\', executed_at = NOW(), result = ?
+            UPDATE license_commands SET status = \'EXECUTED\', executed_at = CURRENT_TIMESTAMP, result = ?
             WHERE id = ?
         ');
         return $stmt->execute([$result, $id]);
@@ -53,7 +53,7 @@ class LicenseCommandRepository
     public function markFailed(int $id, string $result): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE license_commands SET status = \'FAILED\', executed_at = NOW(), result = ?
+            UPDATE license_commands SET status = \'FAILED\', executed_at = CURRENT_TIMESTAMP, result = ?
             WHERE id = ?
         ');
         return $stmt->execute([$result, $id]);

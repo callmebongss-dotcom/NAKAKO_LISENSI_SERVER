@@ -402,7 +402,7 @@ class LicenseService
         $payloadJson = json_encode($payload);
         $payloadB64 = base64_encode($payloadJson);
 
-        $signature = hash_hmac('sha256', $payloadB64, JWT_SECRET, true);
+        $signature = hash_hmac('sha256', $payloadB64, \JWT_SECRET, true);
         $signatureB64 = base64_encode($signature);
 
         return $payloadB64 . '.' . $signatureB64;

@@ -46,7 +46,7 @@ class PaymentTransactionRepository
     {
         $stmt = $this->db->prepare('
             INSERT INTO payment_transactions (invoice_id, subscription_id, license_id, amount, provider, provider_reference, status, payment_method, paid_at, raw_response, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([$data['invoice_id'], $data['subscription_id'] ?? null, $data['license_id'], $data['amount'], $data['provider'] ?? null, $data['provider_reference'] ?? null, $data['status'] ?? 'PENDING', $data['payment_method'] ?? null, $data['paid_at'] ?? null, $data['raw_response'] ?? null]);
         return (int) $this->db->lastInsertId();

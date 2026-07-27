@@ -13,7 +13,7 @@ class HistoryLogRepository
         $db = Database::getConnection();
         $stmt = $db->prepare(
             "INSERT INTO history_logs (license_id, action, description, old_value, new_value, admin_name, ip_address, created_at)
-             VALUES (:license_id, :action, :description, :old_value, :new_value, :admin_name, :ip_address, NOW())"
+             VALUES (:license_id, :action, :description, :old_value, :new_value, :admin_name, :ip_address, CURRENT_TIMESTAMP)"
         );
         $stmt->execute([
             'license_id' => $log->licenseId,

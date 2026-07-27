@@ -18,7 +18,7 @@ class AuditLogRepository
     {
         $stmt = $this->db->prepare('
             INSERT INTO audit_logs (action, admin_name, license_id, details, ip_address, user_agent, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, NOW())
+            VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([
             $data['action'],

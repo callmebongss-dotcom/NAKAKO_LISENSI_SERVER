@@ -176,7 +176,7 @@ class LicenseController
         $username = $data['username'] ?? '';
         $password = $data['password'] ?? '';
 
-        if ($username === ADMIN_USERNAME && $password === ADMIN_PASSWORD) {
+        if ($username === \ADMIN_USERNAME && $password === \ADMIN_PASSWORD) {
             $token = base64_encode(json_encode([
                 'username' => $username,
                 'exp' => time() + 86400,

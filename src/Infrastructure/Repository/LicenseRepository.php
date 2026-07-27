@@ -97,7 +97,7 @@ class LicenseRepository
         }
         $stmt = $this->db->prepare('
             INSERT INTO licenses (device_id, business_name, owner_name, phone_number, email, city, license_status, license_type, device_fingerprint, device_name, platform, app_version, plan_id, product_key, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([
             $data['device_id'] ?? null,
@@ -122,7 +122,7 @@ class LicenseRepository
     {
         $stmt = $this->db->prepare('
             INSERT INTO licenses (device_id, license_key, business_name, owner_name, phone_number, city, license_status, license_type, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, \'ACTIVE\', \'FULL\', NOW(), NOW())
+            VALUES (?, ?, ?, ?, ?, ?, \'ACTIVE\', \'FULL\', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([
             $data['device_id'],
@@ -151,7 +151,7 @@ class LicenseRepository
     public function approve(int $id, string $licenseKey, string $approvedBy): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE licenses SET license_status = \'ACTIVE\', license_key = ?, approved_at = NOW(), updated_at = NOW(), approved_by = ?
+            UPDATE licenses SET license_status = \'ACTIVE\', license_key = ?, approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP, approved_by = ?
             WHERE id = ?
         ');
         return $stmt->execute([$licenseKey, $approvedBy, $id]);
@@ -160,7 +160,7 @@ class LicenseRepository
     public function approveAsLifetime(int $id, string $licenseKey, string $approvedBy, float $purchasePrice): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE licenses SET license_status = \'ACTIVE\', license_type = \'LIFETIME\', license_key = ?, purchase_price = ?, purchase_date = NOW(), activation_date = NOW(), approved_at = NOW(), updated_at = NOW(), approved_by = ?
+            UPDATE licenses SET license_status = \'ACTIVE\', license_type = \'LIFETIME\', license_key = ?, purchase_price = ?, purchase_date = CURRENT_TIMESTAMP, activation_date = CURRENT_TIMESTAMP, approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP, approved_by = ?
             WHERE id = ?
         ');
         return $stmt->execute([$licenseKey, $purchasePrice, $approvedBy, $id]);
@@ -168,17 +168,18 @@ class LicenseRepository
 
     public function approveAsTrial(int $id, string $licenseKey, string $approvedBy, int $trialDays): bool
     {
+        $expired = date('Y-m-d H:i:s', strtotime("+$trialDays days"));
         $stmt = $this->db->prepare('
-            UPDATE licenses SET license_status = \'ACTIVE\', license_type = \'TRIAL\', license_key = ?, activation_date = NOW(), approved_at = NOW(), updated_at = NOW(), approved_by = ?, license_expired = DATE_ADD(NOW(), INTERVAL ? DAY)
+            UPDATE licenses SET license_status = \'ACTIVE\', license_type = \'TRIAL\', license_key = ?, activation_date = CURRENT_TIMESTAMP, approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP, approved_by = ?, license_expired = ?
             WHERE id = ?
         ');
-        return $stmt->execute([$licenseKey, $approvedBy, '+' . $trialDays, $id]);
+        return $stmt->execute([$licenseKey, $approvedBy, $expired, $id]);
     }
 
     public function reject(int $id, string $remarks, string $approvedBy): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE licenses SET license_status = \'REJECTED\', updated_at = NOW(), remarks = ?, approved_by = ?
+            UPDATE licenses SET license_status = \'REJECTED\', updated_at = CURRENT_TIMESTAMP, remarks = ?, approved_by = ?
             WHERE id = ?
         ');
         return $stmt->execute([$remarks, $approvedBy, $id]);
@@ -187,7 +188,7 @@ class LicenseRepository
     public function block(int $id, string $reason): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE licenses SET license_status = \'BLOCKED\', blocked_date = NOW(), blocked_reason = ?, updated_at = NOW()
+            UPDATE licenses SET license_status = \'BLOCKED\', blocked_date = CURRENT_TIMESTAMP, blocked_reason = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ');
         return $stmt->execute([$reason, $id]);
@@ -196,7 +197,7 @@ class LicenseRepository
     public function unblock(int $id): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE licenses SET license_status = \'ACTIVE\', blocked_date = NULL, blocked_reason = NULL, updated_at = NOW()
+            UPDATE licenses SET license_status = \'ACTIVE\', blocked_date = NULL, blocked_reason = NULL, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ');
         return $stmt->execute([$id]);
@@ -205,7 +206,7 @@ class LicenseRepository
     public function setTrialExpired(int $id): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE licenses SET license_status = \'TRIAL_EXPIRED\', updated_at = NOW()
+            UPDATE licenses SET license_status = \'TRIAL_EXPIRED\', updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ');
         return $stmt->execute([$id]);
@@ -214,7 +215,7 @@ class LicenseRepository
     public function suspend(int $id, string $remarks): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE licenses SET license_status = \'SUSPENDED\', updated_at = NOW(), remarks = ?
+            UPDATE licenses SET license_status = \'SUSPENDED\', updated_at = CURRENT_TIMESTAMP, remarks = ?
             WHERE id = ?
         ');
         return $stmt->execute([$remarks, $id]);
@@ -223,7 +224,7 @@ class LicenseRepository
     public function unsuspend(int $id): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE licenses SET license_status = \'ACTIVE\', updated_at = NOW(), remarks = NULL
+            UPDATE licenses SET license_status = \'ACTIVE\', updated_at = CURRENT_TIMESTAMP, remarks = NULL
             WHERE id = ?
         ');
         return $stmt->execute([$id]);
@@ -232,7 +233,7 @@ class LicenseRepository
     public function updateFingerprint(int $id, string $fingerprint, string $deviceName, string $platform, string $appVersion): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE licenses SET device_fingerprint = ?, device_name = ?, platform = ?, app_version = ?, last_online = NOW(), last_sync = NOW(), updated_at = NOW()
+            UPDATE licenses SET device_fingerprint = ?, device_name = ?, platform = ?, app_version = ?, last_online = CURRENT_TIMESTAMP, last_sync = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ');
         return $stmt->execute([$fingerprint, $deviceName, $platform, $appVersion, $id]);
@@ -241,7 +242,7 @@ class LicenseRepository
     public function updateDevice(int $id, string $deviceId, string $fingerprint, string $deviceName, string $platform, string $appVersion): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE licenses SET device_id = ?, device_fingerprint = ?, device_name = ?, platform = ?, app_version = ?, last_online = NOW(), last_sync = NOW(), updated_at = NOW()
+            UPDATE licenses SET device_id = ?, device_fingerprint = ?, device_name = ?, platform = ?, app_version = ?, last_online = CURRENT_TIMESTAMP, last_sync = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ');
         return $stmt->execute([$deviceId, $fingerprint, $deviceName, $platform, $appVersion, $id]);
@@ -249,14 +250,14 @@ class LicenseRepository
 
     public function setPlan(int $id, int $planId): bool
     {
-        $stmt = $this->db->prepare('UPDATE licenses SET plan_id = ?, updated_at = NOW() WHERE id = ?');
+        $stmt = $this->db->prepare('UPDATE licenses SET plan_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         return $stmt->execute([$planId, $id]);
     }
 
     public function clearFingerprint(int $id): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE licenses SET device_fingerprint = NULL, device_name = NULL, platform = NULL, app_version = NULL, last_online = NULL, clone_detected = 0, license_status = \'ACTIVE\', remarks = \'Menunggu aktivasi perangkat baru\', updated_at = NOW()
+            UPDATE licenses SET device_fingerprint = NULL, device_name = NULL, platform = NULL, app_version = NULL, last_online = NULL, clone_detected = 0, license_status = \'ACTIVE\', remarks = \'Menunggu aktivasi perangkat baru\', updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ');
         return $stmt->execute([$id]);
@@ -265,7 +266,7 @@ class LicenseRepository
     public function resetDevice(int $id): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE licenses SET device_fingerprint = NULL, device_name = NULL, platform = NULL, app_version = NULL, device_id = NULL, last_online = NULL, clone_detected = 0, remarks = \'Device reset oleh admin\', updated_at = NOW()
+            UPDATE licenses SET device_fingerprint = NULL, device_name = NULL, platform = NULL, app_version = NULL, device_id = NULL, last_online = NULL, clone_detected = 0, remarks = \'Device reset oleh admin\', updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ');
         return $stmt->execute([$id]);
@@ -274,7 +275,7 @@ class LicenseRepository
     public function markCloneDetected(int $id): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE licenses SET clone_detected = 1, license_status = \'BLOCKED\', updated_at = NOW(), remarks = \'CLONE DETECTED: Device ID digunakan oleh fingerprint berbeda\'
+            UPDATE licenses SET clone_detected = 1, license_status = \'BLOCKED\', updated_at = CURRENT_TIMESTAMP, remarks = \'CLONE DETECTED: Device ID digunakan oleh fingerprint berbeda\'
             WHERE id = ?
         ');
         return $stmt->execute([$id]);
@@ -282,7 +283,7 @@ class LicenseRepository
 
     public function updateLastOnline(int $id): bool
     {
-        $stmt = $this->db->prepare('UPDATE licenses SET last_online = NOW(), updated_at = NOW() WHERE id = ?');
+        $stmt = $this->db->prepare('UPDATE licenses SET last_online = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         return $stmt->execute([$id]);
     }
 
@@ -301,7 +302,7 @@ class LicenseRepository
 
     public function extendExpiry(int $id, string $newExpiry): bool
     {
-        $stmt = $this->db->prepare('UPDATE licenses SET license_expired = ?, updated_at = NOW() WHERE id = ?');
+        $stmt = $this->db->prepare('UPDATE licenses SET license_expired = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         return $stmt->execute([$newExpiry, $id]);
     }
 
@@ -309,7 +310,7 @@ class LicenseRepository
     {
         $stmt = $this->db->prepare('
             INSERT INTO device_transfer_history (license_id, old_fingerprint, new_fingerprint, old_device_id, new_device_id, admin_name, reason, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+            VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([$licenseId, $oldFp, $newFp, $oldDeviceId, $newDeviceId, $adminName, $reason]);
     }
@@ -323,43 +324,43 @@ class LicenseRepository
 
     public function incrementTransferCount(int $id): bool
     {
-        $stmt = $this->db->prepare('UPDATE licenses SET transfer_count = transfer_count + 1, updated_at = NOW() WHERE id = ?');
+        $stmt = $this->db->prepare('UPDATE licenses SET transfer_count = transfer_count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         return $stmt->execute([$id]);
     }
 
     public function updatePurchasePrice(int $id, float $price): bool
     {
-        $stmt = $this->db->prepare('UPDATE licenses SET purchase_price = ?, updated_at = NOW() WHERE id = ?');
+        $stmt = $this->db->prepare('UPDATE licenses SET purchase_price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         return $stmt->execute([$price, $id]);
     }
 
     public function updateMajorVersion(int $id, string $version): bool
     {
-        $stmt = $this->db->prepare('UPDATE licenses SET major_version = ?, updated_at = NOW() WHERE id = ?');
+        $stmt = $this->db->prepare('UPDATE licenses SET major_version = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         return $stmt->execute([$version, $id]);
     }
 
     public function updateNotesOnly(int $id, ?string $notes): bool
     {
-        $stmt = $this->db->prepare('UPDATE licenses SET notes = ?, updated_at = NOW() WHERE id = ?');
+        $stmt = $this->db->prepare('UPDATE licenses SET notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         return $stmt->execute([$notes, $id]);
     }
 
     public function updateMaxTransfer(int $id, int $max): bool
     {
-        $stmt = $this->db->prepare('UPDATE licenses SET max_transfer = ?, updated_at = NOW() WHERE id = ?');
+        $stmt = $this->db->prepare('UPDATE licenses SET max_transfer = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         return $stmt->execute([$max, $id]);
     }
 
     public function updateProductKey(int $id, string $productKey): bool
     {
-        $stmt = $this->db->prepare('UPDATE licenses SET product_key = ?, updated_at = NOW() WHERE id = ?');
+        $stmt = $this->db->prepare('UPDATE licenses SET product_key = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         return $stmt->execute([$productKey, $id]);
     }
 
     public function updateProductKeyId(int $id, int $productKeyId): bool
     {
-        $stmt = $this->db->prepare('UPDATE licenses SET product_key_id = ?, updated_at = NOW() WHERE id = ?');
+        $stmt = $this->db->prepare('UPDATE licenses SET product_key_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?');
         return $stmt->execute([$productKeyId, $id]);
     }
 }

@@ -73,7 +73,7 @@ class ProductKeyRepository
     {
         $stmt = $this->db->prepare('
             INSERT INTO product_keys (product_key, status, license_type, generated_by, created_at)
-            VALUES (?, ?, ?, ?, NOW())
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([
             $data['product_key'],
@@ -87,7 +87,7 @@ class ProductKeyRepository
     public function markAsUsed(int $id, int $licenseId): bool
     {
         $stmt = $this->db->prepare('
-            UPDATE product_keys SET status = \'USED\', license_id = ?, activated_at = NOW()
+            UPDATE product_keys SET status = \'USED\', license_id = ?, activated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ');
         return $stmt->execute([$licenseId, $id]);

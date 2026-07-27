@@ -60,7 +60,7 @@ class SubscriptionRepository
     {
         $stmt = $this->db->prepare('
             INSERT INTO subscriptions (license_id, plan_id, status, start_date, end_date, grace_end_date, auto_renew, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([$data['license_id'], $data['plan_id'], $data['status'] ?? 'PENDING', $data['start_date'] ?? null, $data['end_date'] ?? null, $data['grace_end_date'] ?? null, $data['auto_renew'] ?? 0]);
         return (int) $this->db->lastInsertId();
@@ -77,7 +77,7 @@ class SubscriptionRepository
             }
         }
         if (empty($fields)) return false;
-        $fields[] = "updated_at = NOW()";
+        $fields[] = "updated_at = CURRENT_TIMESTAMP";
         $values[] = $id;
         $stmt = $this->db->prepare('UPDATE subscriptions SET ' . implode(', ', $fields) . ' WHERE id = ?');
         return $stmt->execute($values);
@@ -85,15 +85,20 @@ class SubscriptionRepository
 
     public function findExpiringSoon(int $days): array
     {
-        $stmt = $this->db->prepare("
+        $sql = "
             SELECT s.*, l.business_name, l.owner_name, sp.name as plan_name, sp.price as plan_price
             FROM subscriptions s
             LEFT JOIN licenses l ON s.license_id = l.id
             LEFT JOIN subscription_plans sp ON s.plan_id = sp.id
             WHERE s.status = 'ACTIVE' AND s.end_date IS NOT NULL
-            AND julianday(s.end_date) - julianday('now') BETWEEN 0 AND ?
-            ORDER BY s.end_date ASC
-        ");
+        ";
+        if (\App\Infrastructure\Database\Database::isMysql()) {
+            $sql .= "AND DATEDIFF(s.end_date, CURDATE()) BETWEEN 0 AND ?";
+        } else {
+            $sql .= "AND julianday(s.end_date) - julianday('now') BETWEEN 0 AND ?";
+        }
+        $sql .= " ORDER BY s.end_date ASC";
+        $stmt = $this->db->prepare($sql);
         $stmt->execute([$days]);
         return array_map(fn($r) => new Subscription($r), $stmt->fetchAll());
     }
@@ -106,7 +111,7 @@ class SubscriptionRepository
             LEFT JOIN licenses l ON s.license_id = l.id
             LEFT JOIN subscription_plans sp ON s.plan_id = sp.id
             WHERE s.status = 'ACTIVE' AND s.end_date IS NOT NULL
-            AND s.end_date <= NOW()
+            AND s.end_date <= CURRENT_TIMESTAMP
             ORDER BY s.end_date DESC
         ");
         return array_map(fn($r) => new Subscription($r), $stmt->fetchAll());
@@ -131,19 +136,35 @@ class SubscriptionRepository
 
     public function getMonthlyRevenue(): float
     {
-        $stmt = $this->db->query("
+        $month = date('Y-m');
+        $stmt = $this->db->prepare("
             SELECT COALESCE(SUM(amount), 0) as total FROM payment_transactions
-            WHERE status = 'PAID' AND DATE_FORMAT(paid_at, '%Y-%m') = DATE_FORMAT(NOW(), '%Y-%m')
+            WHERE status = 'PAID' AND strftime('%Y-%m', paid_at) = ?
         ");
+        if (\App\Infrastructure\Database\Database::isMysql()) {
+            $stmt = $this->db->prepare("
+                SELECT COALESCE(SUM(amount), 0) as total FROM payment_transactions
+                WHERE status = 'PAID' AND DATE_FORMAT(paid_at, '%Y-%m') = ?
+            ");
+        }
+        $stmt->execute([$month]);
         return (float) $stmt->fetch()['total'];
     }
 
     public function getYearlyRevenue(): float
     {
-        $stmt = $this->db->query("
+        $year = date('Y');
+        $stmt = $this->db->prepare("
             SELECT COALESCE(SUM(amount), 0) as total FROM payment_transactions
-            WHERE status = 'PAID' AND YEAR(paid_at) = YEAR(NOW())
+            WHERE status = 'PAID' AND strftime('%Y', paid_at) = ?
         ");
+        if (\App\Infrastructure\Database\Database::isMysql()) {
+            $stmt = $this->db->prepare("
+                SELECT COALESCE(SUM(amount), 0) as total FROM payment_transactions
+                WHERE status = 'PAID' AND YEAR(paid_at) = ?
+            ");
+        }
+        $stmt->execute([$year]);
         return (float) $stmt->fetch()['total'];
     }
 
@@ -151,8 +172,14 @@ class SubscriptionRepository
     {
         $stmt = $this->db->query("
             SELECT COALESCE(SUM(amount), 0) as total FROM payment_transactions
-            WHERE status = 'PAID' AND DATE(paid_at) = CURDATE()
+            WHERE status = 'PAID' AND DATE(paid_at) = DATE('now')
         ");
+        if (\App\Infrastructure\Database\Database::isMysql()) {
+            $stmt = $this->db->query("
+                SELECT COALESCE(SUM(amount), 0) as total FROM payment_transactions
+                WHERE status = 'PAID' AND DATE(paid_at) = CURDATE()
+            ");
+        }
         return (float) $stmt->fetch()['total'];
     }
 

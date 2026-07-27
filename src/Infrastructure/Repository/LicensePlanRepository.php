@@ -39,7 +39,7 @@ class LicensePlanRepository
     {
         $stmt = $this->db->prepare('
             INSERT INTO license_plans (plan_name, description, max_tv, offline_days, license_duration_days, allow_transfer, max_transfer, allow_remote_disable, allow_remote_update, priority_support, is_active, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([
             $data['plan_name'],
@@ -69,7 +69,7 @@ class LicensePlanRepository
             }
         }
         if (empty($fields)) return false;
-        $fields[] = "updated_at = NOW()";
+        $fields[] = "updated_at = CURRENT_TIMESTAMP";
         $values[] = $id;
         $sql = 'UPDATE license_plans SET ' . implode(', ', $fields) . ' WHERE id = ?';
         $stmt = $this->db->prepare($sql);

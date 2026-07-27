@@ -47,10 +47,15 @@ class Database
         return self::$instance;
     }
 
+    public static function isMysql(): bool
+    {
+        return getenv('MYSQL_HOST') ? true : false;
+    }
+
     public static function initialize(): void
     {
         $db = self::getConnection();
-        $isMysql = getenv('MYSQL_HOST') ? true : false;
+        $isMysql = self::isMysql();
 
         if ($isMysql) {
             $sql = file_get_contents(__DIR__ . '/../../../database/migration.sql');

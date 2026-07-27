@@ -39,7 +39,7 @@ class SubscriptionPlanRepository
     {
         $stmt = $this->db->prepare('
             INSERT INTO subscription_plans (name, price, duration_days, offline_days, max_tv, max_user, feature_flags, description, status, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([$data['name'], $data['price'] ?? 0, $data['duration_days'] ?? 30, $data['offline_days'] ?? 7, $data['max_tv'] ?? 2, $data['max_user'] ?? 1, $data['feature_flags'] ?? null, $data['description'] ?? null, $data['status'] ?? 'ACTIVE']);
         return (int) $this->db->lastInsertId();
@@ -56,7 +56,7 @@ class SubscriptionPlanRepository
             }
         }
         if (empty($fields)) return false;
-        $fields[] = "updated_at = NOW()";
+        $fields[] = "updated_at = CURRENT_TIMESTAMP";
         $values[] = $id;
         $stmt = $this->db->prepare('UPDATE subscription_plans SET ' . implode(', ', $fields) . ' WHERE id = ?');
         return $stmt->execute($values);

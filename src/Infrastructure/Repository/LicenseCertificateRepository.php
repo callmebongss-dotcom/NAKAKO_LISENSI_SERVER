@@ -56,7 +56,7 @@ class LicenseCertificateRepository
     {
         $stmt = $this->db->prepare('
             INSERT INTO license_certificates (certificate_number, license_id, license_key, product_key, business_name, owner_name, phone_number, device_id, license_type, activation_date, signature_hash, qr_data, generated_at, generated_by, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, NOW())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([
             $data['certificate_number'],

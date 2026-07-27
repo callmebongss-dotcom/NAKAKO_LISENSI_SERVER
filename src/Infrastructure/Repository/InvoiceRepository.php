@@ -73,7 +73,7 @@ class InvoiceRepository
     {
         $stmt = $this->db->prepare('
             INSERT INTO invoices (invoice_number, subscription_id, license_id, plan_id, amount, tax, total, status, due_date, notes, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([$data['invoice_number'], $data['subscription_id'] ?? null, $data['license_id'], $data['plan_id'], $data['amount'], $data['tax'] ?? 0, $data['total'], $data['status'] ?? 'UNPAID', $data['due_date'] ?? null, $data['notes'] ?? null]);
         return (int) $this->db->lastInsertId();
@@ -95,8 +95,13 @@ class InvoiceRepository
 
     public function getNextNumber(): string
     {
-        $stmt = $this->db->query("SELECT COUNT(*) as c FROM invoices WHERE YEAR(created_at) = YEAR(NOW())");
+        $year = date('Y');
+        $stmt = $this->db->prepare("SELECT COUNT(*) as c FROM invoices WHERE strftime('%Y', created_at) = ?");
+        if (\App\Infrastructure\Database\Database::isMysql()) {
+            $stmt = $this->db->prepare("SELECT COUNT(*) as c FROM invoices WHERE YEAR(created_at) = ?");
+        }
+        $stmt->execute([$year]);
         $count = (int) $stmt->fetch()['c'];
-        return 'INV-' . date('Y') . '-' . str_pad($count + 1, 6, '0', STR_PAD_LEFT);
+        return 'INV-' . $year . '-' . str_pad($count + 1, 6, '0', STR_PAD_LEFT);
     }
 }

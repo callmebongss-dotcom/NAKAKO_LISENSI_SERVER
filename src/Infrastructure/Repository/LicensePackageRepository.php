@@ -39,7 +39,7 @@ class LicensePackageRepository
     {
         $stmt = $this->db->prepare('
             INSERT INTO license_packages (name, description, price, duration_days, max_devices, features, status, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ');
         $stmt->execute([
             $data['name'],
@@ -65,7 +65,7 @@ class LicensePackageRepository
             }
         }
         if (empty($fields)) return false;
-        $fields[] = "updated_at = NOW()";
+        $fields[] = "updated_at = CURRENT_TIMESTAMP";
         $values[] = $id;
         $sql = 'UPDATE license_packages SET ' . implode(', ', $fields) . ' WHERE id = ?';
         $stmt = $this->db->prepare($sql);

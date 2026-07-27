@@ -27,7 +27,7 @@ class CertificateGeneratorService
             $data['license_type'] ?? '',
             $data['activation_date'] ?? '',
         ]);
-        return hash_hmac('sha256', $payload, defined('JWT_SECRET') ? JWT_SECRET : 'nakako-secret-key-2026');
+        return hash_hmac('sha256', $payload, defined('JWT_SECRET') ? \JWT_SECRET : 'nakako-secret-key-2026');
     }
 
     private function generateQrRaw(string $text): array
