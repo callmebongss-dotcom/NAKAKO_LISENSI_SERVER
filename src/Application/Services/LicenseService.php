@@ -179,7 +179,7 @@ class LicenseService
             return ['success' => false, 'message' => 'Lisensi belum aktif', 'status' => $license->licenseStatus];
         }
 
-        if ($license->deviceId !== $data['device_id']) {
+        if ($license->deviceId !== null && $license->deviceId !== $data['device_id']) {
             return ['success' => false, 'message' => 'Device ID tidak cocok dengan License Key ini'];
         }
 
@@ -189,6 +189,7 @@ class LicenseService
             'phone_number' => $data['phone_number'] ?? $license->phoneNumber,
             'email' => $data['email'] ?? $license->email,
             'city' => $data['city'] ?? $license->city,
+            'device_id' => $data['device_id'],
             'device_fingerprint' => $data['device_fingerprint'] ?? $license->deviceFingerprint,
             'device_name' => $data['device_name'] ?? $license->deviceName,
             'platform' => $data['platform'] ?? $license->platform,
