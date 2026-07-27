@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buat License Key</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: system-ui, sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+.card { background: white; padding: 32px; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); width: 420px; max-width: 100%; margin: 20px; }
+h1 { font-size: 22px; margin-bottom: 8px; color: #1a1a2e; }
+p { font-size: 14px; color: #666; margin-bottom: 24px; }
+label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 6px; }
+input { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; font-family: monospace; outline: none; transition: 0.2s; }
+input:focus { border-color: #6c63ff; }
+button { width: 100%; padding: 12px; background: #6c63ff; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 20px; transition: 0.2s; }
+button:hover { background: #5b52e0; }
+button:disabled { background: #ccc; cursor: not-allowed; }
+#result { margin-top: 16px; padding: 12px; border-radius: 8px; font-size: 13px; display: none; }
+#result.success { display: block; background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+#result.error { display: block; background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+#result .key { font-family: monospace; font-weight: bold; font-size: 15px; margin-top: 4px; }
+.loader { display: none; width: 18px; height: 18px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Buat License Key</h1>
+  <p>Masukkan Device ID dari pembeli untuk membuat License Key</p>
+
+  <label for="deviceId">Device ID</label>
+  <input type="text" id="deviceId" placeholder="Masukkan Device ID" autocomplete="off" spellcheck="false">
+
+  <button id="btn" onclick="createLicense()">
+    <span id="btnText">BUAT LICENSE KEY</span>
+    <div id="loader" class="loader"></div>
+  </button>
+
+  <div id="result"></div>
+</div>
+
+<script>
+async function createLicense() {
+  const deviceId = document.getElementById('deviceId').value.trim();
+  if (!deviceId) return showResult('Device ID tidak boleh kosong', 'error');
+
+  const btn = document.getElementById('btn');
+  const btnText = document.getElementById('btnText');
+  const loader = document.getElementById('loader');
+  btn.disabled = true;
+  btnText.style.display = 'none';
+  loader.style.display = 'block';
+
+  try {
+    const res = await fetch('/api/license/create-by-device', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ device_id: deviceId }),
+    });
+    const data = await res.json();
+
+    if (data.success && data.data) {
+      showResult(
+        'License Key berhasil dibuat!<br>' +
+        '<strong>Device ID:</strong> ' + data.data.device_id + '<br>' +
+        '<strong>License Key:</strong><br><div class="key">' + data.data.license_key + '</div>',
+        'success'
+      );
+    } else {
+      showResult(data.message || 'Gagal membuat license key', 'error');
+    }
+  } catch (e) {
+    showResult('Gagal terhubung ke server: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btnText.style.display = 'inline';
+    loader.style.display = 'none';
+  }
+}
+
+function showResult(msg, type) {
+  const el = document.getElementById('result');
+  el.className = type;
+  el.innerHTML = msg;
+}
+</script>
+</body>
+</html>

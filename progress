@@ -1,0 +1,42 @@
+# NAKAKO LICENSE SERVER — Progress Log
+## 10 Juli 2026
+
+### TASK 11.1 — MEMBANGUN MODUL "PAKET LISENSI" ✅ SELESAI
+
+#### Files Created:
+1. `database/migration.sql` — Added `license_packages` table + seed data (4 paket)
+2. `src/Domain/Entities/LicensePackage.php` — Entity
+3. `src/Infrastructure/Repository/LicensePackageRepository.php` — Repository
+4. `src/Application/Services/PackageService.php` — Service
+5. `src/Presentation/Controllers/PackageController.php` — Controller
+
+#### Files Modified:
+6. `public/index.php` — Added `require_once` + 5 API routes
+7. `public/admin/index.html` — Added "Paket Lisensi" tab + page + modal form
+8. `public/admin/js/app.js` — Added CRUD functions + tab navigation
+
+#### Seed Data (4 paket):
+| ID | Nama | Harga | Durasi | Max Device |
+|----|------|-------|--------|------------|
+| 1 | TRIAL | Gratis | 3 hari | 1 |
+| 2 | STANDARD | Rp200.000 | 30 hari | 2 |
+| 3 | PREMIUM | Rp350.000 | 90 hari | 4 |
+| 4 | ENTERPRISE | Rp500.000 | 365 hari | Unlimited |
+
+#### API Endpoints:
+- `GET /api/packages` — List all packages
+- `GET /api/packages/{id}` — Get by ID
+- `POST /api/packages` — Create package
+- `PUT /api/packages/{id}` — Update package
+- `DELETE /api/packages/{id}` — Delete package
+
+#### Server:
+- Running at `http://localhost:8080`
+- Admin panel: `http://localhost:8080/admin/`
+- Login: admin / nakako123
+
+#### Previous Tasks (NAKAKO_GAMES):
+- Bug Fix #2: Laporan Revenue Breakdown (rental_ps vs fnb split)
+- Bug Fix #3: Global Timer Engine (RentalTimerService singleton)
+- Bug Fix #4: Checkout Panel Spacing (16px → 24px)
+- Build: Windows .exe + Android .apk → Desktop/NAKAKO_GAMES_BUILD/
